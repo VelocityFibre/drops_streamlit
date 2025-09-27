@@ -1,0 +1,27 @@
+[server]
+# Enable CORS and external access for multiple users
+enableCORS = false
+enableXsrfProtection = false
+
+# Set the server to listen on all interfaces (0.0.0.0) for network access
+headless = true
+port = 8501
+
+# Configure for production-like multi-user environment
+maxUploadSize = 200
+enableStaticServing = true
+
+[browser]
+# Prevent automatic browser opening
+gatherUsageStats = false
+
+[theme]
+# Set a professional theme
+primaryColor = "#1f77b4"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f0f2f6"
+textColor = "#262730"
+
+[logger]
+# Configure logging for production
+level = "info"
