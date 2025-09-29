@@ -190,26 +190,28 @@ def configure_grid_options(df):
         editable=False,
         resizable=True,
         sortable=True,
-        filter=True
+        filter=True,
+        wrapHeaderText=True,  # Enable header text wrapping
+        autoHeaderHeight=True  # Auto adjust header height
     )
     
     # Configure specific columns
     gb.configure_column("drop_number", 
                        header_name="Drop Number",
-                       width=120,
+                       width=130,  # Wider to show full drop number
                        pinned="left",
                        cellStyle={"font-weight": "bold"})
     
     # Project column - important for filtering between Lawley and Velo Test
     gb.configure_column("project", 
                        header_name="Project",
-                       width=100,
+                       width=90,  # Adequate for "Lawley" and "Velo Test"
                        pinned="left",  # Keep it visible
                        cellStyle={"font-weight": "bold", "color": "#0066cc"})
     
     gb.configure_column("assigned_agent", 
                        header_name="Agent",
-                       width=120,
+                       width=100,  # Adequate for agent names
                        editable=True,
                        cellEditor='agSelectCellEditor',
                        cellEditorParams={'values': AGENTS})
@@ -230,12 +232,12 @@ def configure_grid_options(df):
     
     gb.configure_column("status",
                        header_name="Status",
-                       width=100,
+                       width=80,  # Compact status column
                        cellStyle=status_cell_style)
     
     # Photo metrics
-    gb.configure_column("completed_photos", header_name="Completed", width=100)
-    gb.configure_column("outstanding_photos", header_name="Outstanding", width=100)
+    gb.configure_column("completed_photos", header_name="Completed", width=90)
+    gb.configure_column("outstanding_photos", header_name="Outstanding", width=90)
     
     # Step columns as checkboxes with full descriptive names
     step_columns = [col for col in df.columns if col.startswith('step_')]
@@ -260,21 +262,22 @@ def configure_grid_options(df):
         header_name = step_labels.get(col, col.replace('_', ' ').title())
         gb.configure_column(col, 
                            header_name=header_name,
-                           width=150,  # Wider columns for longer names
+                           width=120,  # Optimal width for readability with wrapping
                            editable=True,
                            cellRenderer='agCheckboxCellRenderer',
                            cellEditor='agCheckboxCellEditor',
                            wrapHeaderText=True,  # Allow header text wrapping
                            autoHeaderHeight=True)  # Auto adjust header height
     
-    # Other columns
-    gb.configure_column("user_name", header_name="User", width=120)
+    # Other columns with proper widths
+    gb.configure_column("user_name", header_name="User", width=100)
     gb.configure_column("review_date", header_name="Date", width=100)
-    gb.configure_column("comment", header_name="Comment", width=200, wrapText=True, autoHeight=True)
+    gb.configure_column("comment", header_name="Comment", width=180, wrapText=True, autoHeight=True)
     gb.configure_column("outstanding_photos_loaded_to_1map", 
                        header_name="1Map", 
-                       width=80,
+                       width=60,
                        cellRenderer='agCheckboxCellRenderer')
+    gb.configure_column("created_at", header_name="Created", width=120)
     
     # Hide ID column
     gb.configure_column("id", hide=True)
@@ -363,7 +366,8 @@ def main():
                 width='100%',
                 data_return_mode=DataReturnMode.FILTERED_AND_SORTED,
                 update_mode=GridUpdateMode.MODEL_CHANGED,
-                fit_columns_on_grid_load=True,  # Auto-fit columns
+                fit_columns_on_grid_load=False,  # Don't auto-fit, use our custom widths
+                columns_auto_size_mode='FIT_CONTENTS',  # Size columns to fit content
                 allow_unsafe_jscode=True,
                 enable_enterprise_modules=True,
                 theme='streamlit',
