@@ -58,6 +58,51 @@ st.markdown("""
     .status-complete { background-color: #d4edda !important; color: #155724; }
     .status-warning { background-color: #fff3cd !important; color: #856404; }
     .status-danger { background-color: #f8d7da !important; color: #721c24; }
+    
+    /* Auto-sync toggle styling */
+    .auto-sync-toggle {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 8px;
+        padding: 12px 16px;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        z-index: 1001;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .sync-checkbox {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: white;
+        font-weight: 500;
+        font-size: 14px;
+    }
+    
+    .sync-status-indicator {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 4px;
+    }
+    
+    .sync-active { 
+        background-color: #00ff88;
+        box-shadow: 0 0 8px rgba(0, 255, 136, 0.4);
+        animation: pulse 2s infinite;
+    }
+    
+    .sync-paused { 
+        background-color: #ff6b6b;
+    }
+    
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.6; }
+        100% { opacity: 1; }
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -260,11 +305,36 @@ def configure_grid_options(df):
     return gb.build()
 
 def main():
+    # Auto-sync toggle in top-right corner (outside of columns to position absolutely)
+    with st.container():
+        # Create the toggle with proper styling
+        auto_refresh = st.checkbox(
+            "", 
+            value=True,
+            key="auto_sync_toggle",
+            help="Disable to stop auto-refresh while making entries"
+        )
+        
+        # Custom styling for the checkbox container
+        sync_indicator = "sync-active" if auto_refresh else "sync-paused"
+        sync_text = "Auto-Sync ON" if auto_refresh else "Work Mode"
+        sync_icon = "🔄" if auto_refresh else "⏸️"
+        
+        st.markdown(f"""
+        <div class="auto-sync-toggle">
+            <div class="sync-checkbox">
+                <div class="sync-status-indicator {sync_indicator}"></div>
+                {sync_icon} {sync_text}
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    
     # Header
     col1, col2, col3 = st.columns([4, 1, 1])
     with col1:
         st.title("⚡ QA Photo Reviews - Smooth Grid")
-        st.markdown("### Live Neon Database • No Refresh Flicker")
+        subtitle = "### Live Neon Database • No Refresh Flicker" if auto_refresh else "### 🛠️ Work Mode - Auto-sync paused"
+        st.markdown(subtitle)
     
     with col2:
         # Connection status
@@ -285,12 +355,14 @@ def main():
     # Sidebar controls
     st.sidebar.header("🔧 Dashboard Controls")
     st.sidebar.success("✅ Connected to Neon Database")
-    st.sidebar.info("📊 Data refreshes automatically every 10 seconds")
     
-    # Auto-refresh option
-    auto_refresh = st.sidebar.checkbox("🔄 Enable Auto Refresh", value=True)
+    # Show current sync status in sidebar
     if auto_refresh:
-        st.sidebar.caption("Grid will refresh seamlessly")
+        st.sidebar.info("🔄 Auto-sync active - Data refreshes every 10 seconds")
+        st.sidebar.caption("Turn off auto-sync in top-right corner to work uninterrupted")
+    else:
+        st.sidebar.warning("⏸️ Auto-sync paused - Manual refresh only")
+        st.sidebar.caption("Your changes still save, page just won't auto-refresh")
     
     # Load data
     df = get_qa_reviews_data()
