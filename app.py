@@ -74,7 +74,7 @@ def get_qa_reviews_data():
         try:
             query = """
             SELECT 
-                id, drop_number, review_date, user_name, assigned_agent,
+                id, drop_number, review_date, user_name, assigned_agent, project,
                 step_01_property_frontage, step_02_location_before_install, 
                 step_03_outside_cable_span, step_04_home_entry_outside,
                 step_05_home_entry_inside, step_06_fibre_entry_to_ont,
@@ -199,6 +199,13 @@ def configure_grid_options(df):
                        width=120,
                        pinned="left",
                        cellStyle={"font-weight": "bold"})
+    
+    # Project column - important for filtering between Lawley and Velo Test
+    gb.configure_column("project", 
+                       header_name="Project",
+                       width=100,
+                       pinned="left",  # Keep it visible
+                       cellStyle={"font-weight": "bold", "color": "#0066cc"})
     
     gb.configure_column("assigned_agent", 
                        header_name="Agent",
