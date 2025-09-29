@@ -16,48 +16,44 @@ DATABASE_URL = "postgresql://neondb_owner:npg_RIgDxzo4St6d@ep-damp-credit-a857vk
 
 # Configure Streamlit page
 st.set_page_config(
-    page_title="QA Photo Reviews - Smooth Grid",
-    page_icon="⚡",
+    page_title="QA Photo Reviews",
+    page_icon="📋",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
-# Custom CSS
+# Custom CSS for clean professional look
 st.markdown("""
 <style>
-    .stDataFrame {
-        border: 1px solid #ddd;
-        border-radius: 8px;
+    /* Hide Streamlit branding and menu */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    
+    /* Remove padding and margins for full-page feel */
+    .main > div {
+        padding-top: 1rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
     }
-    .metric-container {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 1rem;
-        border-radius: 10px;
-        color: white;
-        text-align: center;
-        margin: 0.5rem 0;
-    }
+    
+    /* Clean grid container */
     .grid-container {
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        margin: 1rem 0;
-    }
-    .connection-status {
-        position: fixed;
-        top: 70px;
-        right: 20px;
-        padding: 8px 16px;
+        border: 1px solid #e1e5e9;
         border-radius: 4px;
-        font-size: 12px;
-        font-weight: bold;
-        z-index: 1000;
+        margin: 0;
+        padding: 0;
     }
-    .connected { background-color: #d4edda; color: #155724; }
-    .disconnected { background-color: #f8d7da; color: #721c24; }
+    
+    /* Status colors for grid */
     .status-complete { background-color: #d4edda !important; color: #155724; }
     .status-warning { background-color: #fff3cd !important; color: #856404; }
     .status-danger { background-color: #f8d7da !important; color: #721c24; }
+    
+    /* Sidebar styling */
+    .css-1d391kg {
+        background-color: #f8f9fa;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -234,16 +230,35 @@ def configure_grid_options(df):
     gb.configure_column("completed_photos", header_name="Completed", width=100)
     gb.configure_column("outstanding_photos", header_name="Outstanding", width=100)
     
-    # Step columns as checkboxes
+    # Step columns as checkboxes with full descriptive names
     step_columns = [col for col in df.columns if col.startswith('step_')]
+    step_labels = {
+        'step_01_property_frontage': 'Property Frontage',
+        'step_02_location_before_install': 'Location on Wall (Before Install)',
+        'step_03_outside_cable_span': 'Outside Cable Span (Pole → Pigtail screw)',
+        'step_04_home_entry_outside': 'Home Entry Point – Outside',
+        'step_05_home_entry_inside': 'Home Entry Point – Inside',
+        'step_06_fibre_entry_to_ont': 'Fibre Entry to ONT (After Install)',
+        'step_07_patched_labelled_drop': 'Patched & Labelled Drop',
+        'step_08_work_area_completion': 'Overall Work Area After Completion',
+        'step_09_ont_barcode_scan': 'ONT Barcode – Scan barcode + photo',
+        'step_10_ups_serial_number': 'Mini-UPS Serial Number (Gizzu)',
+        'step_11_powermeter_reading': 'Powermeter Reading (Drop/Feeder)',
+        'step_12_powermeter_at_ont': 'Powermeter at ONT (Before Activation)',
+        'step_13_active_broadband_light': 'Active Broadband Light',
+        'step_14_customer_signature': 'Customer Signature'
+    }
+    
     for col in step_columns:
-        step_num = col.split('_')[1]
+        header_name = step_labels.get(col, col.replace('_', ' ').title())
         gb.configure_column(col, 
-                           header_name=f"S{step_num}",
-                           width=60,
+                           header_name=header_name,
+                           width=150,  # Wider columns for longer names
                            editable=True,
                            cellRenderer='agCheckboxCellRenderer',
-                           cellEditor='agCheckboxCellEditor')
+                           cellEditor='agCheckboxCellEditor',
+                           wrapHeaderText=True,  # Allow header text wrapping
+                           autoHeaderHeight=True)  # Auto adjust header height
     
     # Other columns
     gb.configure_column("user_name", header_name="User", width=120)
@@ -260,37 +275,11 @@ def configure_grid_options(df):
     return gb.build()
 
 def main():
-    # Header
-    col1, col2, col3 = st.columns([4, 1, 1])
-    with col1:
-        st.title("⚡ QA Photo Reviews - Smooth Grid")
-        st.markdown("### Live Neon Database • No Refresh Flicker")
-    
-    with col2:
-        # Connection status
-        conn = get_database_connection()
-        if conn:
-            st.markdown('<div class="connection-status connected">🟢 Live DB Connected</div>', 
-                       unsafe_allow_html=True)
-            conn.close()
-        else:
-            st.markdown('<div class="connection-status disconnected">🔴 DB Disconnected</div>', 
-                       unsafe_allow_html=True)
-    
-    with col3:
-        if st.button("🔄 Refresh", key="manual_refresh"):
-            st.cache_data.clear()
-            st.rerun()
-    
-    # Sidebar controls
-    st.sidebar.header("🔧 Dashboard Controls")
-    st.sidebar.success("✅ Connected to Neon Database")
-    st.sidebar.info("📊 Data refreshes automatically every 10 seconds")
+    # Sidebar controls (minimal)
+    st.sidebar.header("Filters")
     
     # Auto-refresh option
-    auto_refresh = st.sidebar.checkbox("🔄 Enable Auto Refresh", value=True)
-    if auto_refresh:
-        st.sidebar.caption("Grid will refresh seamlessly")
+    auto_refresh = st.sidebar.checkbox("Enable Auto Refresh", value=True)
     
     # Load data
     df = get_qa_reviews_data()
@@ -299,14 +288,7 @@ def main():
         st.warning("No QA review data found in the database.")
         return
     
-    # Display data info
-    st.sidebar.markdown("### 📈 Data Summary")
-    st.sidebar.metric("Total Records", len(df))
-    st.sidebar.metric("Completed", len(df[df['outstanding_photos'] == 0]))
-    st.sidebar.metric("Outstanding", len(df[df['outstanding_photos'] > 0]))
-    
     # Sidebar filters
-    st.sidebar.subheader("🔍 Filters")
     
     # Date range filter
     min_date = df['review_date'].min()
@@ -356,34 +338,8 @@ def main():
         elif status_filter == 'Urgent':
             filtered_df = filtered_df[filtered_df['outstanding_photos'] > 3]
     
-    # Summary metrics
-    st.markdown("### 📊 Live Dashboard Metrics")
-    col1, col2, col3, col4, col5 = st.columns(5)
-    
-    with col1:
-        total_reviews = len(filtered_df)
-        st.metric("Total Reviews", total_reviews)
-    
-    with col2:
-        completed_reviews = len(filtered_df[filtered_df['outstanding_photos'] == 0])
-        completion_rate = (completed_reviews / total_reviews * 100) if total_reviews > 0 else 0
-        st.metric("Completed", completed_reviews, f"{completion_rate:.1f}%")
-    
-    with col3:
-        avg_completed = filtered_df['completed_photos'].mean() if not filtered_df.empty else 0
-        st.metric("Avg Completed", f"{avg_completed:.1f}")
-    
-    with col4:
-        avg_outstanding = filtered_df['outstanding_photos'].mean() if not filtered_df.empty else 0
-        st.metric("Avg Outstanding", f"{avg_outstanding:.1f}")
-    
-    with col5:
-        urgent_count = len(filtered_df[filtered_df['outstanding_photos'] > 3])
-        st.metric("🚨 Urgent", urgent_count)
-    
-    # Main Grid
-    st.markdown("### 📋 Interactive Data Grid")
-    st.markdown("*✏️ Click cells to edit • 📊 Filter & sort columns • ☑️ Select rows for bulk operations*")
+    # Main Grid (clean, no headers)
+    # Remove all metrics and headers for clean professional look
     
     if not filtered_df.empty:
         grid_df = prepare_grid_data(filtered_df)
@@ -396,11 +352,11 @@ def main():
             grid_response = AgGrid(
                 grid_df,
                 gridOptions=grid_options,
-                height=600,
+                height=800,  # Larger height for full page feel
                 width='100%',
                 data_return_mode=DataReturnMode.FILTERED_AND_SORTED,
                 update_mode=GridUpdateMode.MODEL_CHANGED,
-                fit_columns_on_grid_load=False,
+                fit_columns_on_grid_load=True,  # Auto-fit columns
                 allow_unsafe_jscode=True,
                 enable_enterprise_modules=True,
                 theme='streamlit',
